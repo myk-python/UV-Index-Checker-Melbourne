@@ -1,0 +1,90 @@
+#GUI build for UVIndex checker
+#Will download data from ARPANSA website when run and provide UV rating at current time
+
+
+#Importing the relevant modules:
+#tkinter to build window, requests to download xml file, ElementTree to parse xml
+#os to remove xml file on window destruction
+
+import tkinter as tk
+import requests as rq
+import xml.etree.ElementTree as et
+import os
+
+#Download and create new file based on the xml from ARPANSA using requests library
+
+def ARPANSARetrieval():
+
+    url = ('https://uvdata.arpansa.gov.au/xml/uvvalues.xml')
+    r = rq.get (url)
+    global UVDATA
+    with open ('UVDATA.xml', 'wb') as UVDATA:
+        UVDATA.write(r.content)
+        UVDATA = ('UVDATA.xml')
+   
+#Parse the created xml using ElementTree
+    
+    tree = et.parse(UVDATA)
+    root = tree.getroot()
+
+#Inspect elements of tree
+#Navigate to Melbourne sub-element
+#Display the UV Index and time under the Melbourne sub-element
+    
+    for child in root.iter():
+        locationofinterest = str(child.attrib)
+        lc = locationofinterest
+        if 'Melbourne' in lc:
+            for y in child.iter('time'):
+                time = y.text
+            for x in child.iter('index'):
+                #print ('UV Index in', lc[8:17], 'at',time, 'is', x.text)
+                Title ['text'] =('UV Index in '+ lc[8:17] + ' at ' + time + ' is ' + x.text)
+
+# Delete the xml file and exit window when called
+
+def Deletexml():
+    os.remove(UVDATA)
+    window.destroy()
+
+#Create a window using tkinter
+#Empty button which will be set by the second one calling ARPANSARetrieval function
+
+window = tk.Tk()
+window.resizable ('false', 'false')
+Title = tk.Label (
+text = '',
+font = ('arial', '25', 'bold'),
+foreground = 'orange',
+background ='black',
+width ='40'
+)
+Title.pack()
+
+#Interactive button calls ARPANSARetrieval function and then writes text to the label
+
+Retrieval = tk.Button (
+text = 'Get UV Index',
+font = ('arial', '25', 'bold'),
+fg = 'white',
+bg = 'black',
+width = '40',
+command = ARPANSARetrieval
+)
+Retrieval.pack()
+
+#Deletes xml and destroys window to exit
+
+Exit = tk.Button (
+text = 'Exit',
+font = ('arial', '25', 'bold'),
+fg ='white',
+bg ='black',
+width = '40',
+command = Deletexml
+)
+Exit.pack()
+
+#Keeps window active until interaction is finished
+
+window.mainloop()
